@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Soup Order Page</title>
+  <style>
+    body {
+      background-color: #101820;
+      color: #fefefe;
+      font-family: Arial, sans-serif;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 20px;
+      padding: 20px;
+    }
+
+    .card {
+      background-color: #1a1f29;
+      border-radius: 12px;
+      padding: 10px;
+      width: 220px;
+      text-align: center;
+      box-shadow: 0 0 10px rgba(0,0,0,0.4);
+    }
+
+    .card img {
+      width: 100%;
+      border-radius: 8px;
+      background: #333;
+      height: 140px;
+      object-fit: cover;
+    }
+
+    button {
+      background-color: #4a90e2;
+      border: none;
+      border-radius: 6px;
+      color: white;
+      padding: 8px 12px;
+      cursor: pointer;
+      margin-top: 8px;
+    }
+
+    button:hover {
+      background-color: #357ab8;
+    }
+
+    /* Popup styling */
+    .popup {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.6);
+      display: none;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .popup-content {
+      background: #1c2230;
+      padding: 20px;
+      border-radius: 12px;
+      width: 300px;
+      text-align: left;
+      box-shadow: 0 0 20px rgba(0,0,0,0.5);
+    }
+
+    .popup-content h3 {
+      margin-top: 0;
+      color: #ffd700;
+    }
+
+    .popup-content label {
+      display: block;
+      margin: 8px 0 4px;
+    }
+
+    .popup-content input[type="text"] {
+      width: 100%;
+      padding: 6px;
+      border-radius: 4px;
+      border: 1px solid #555;
+      background: #222;
+      color: white;
+    }
+
+    .close-btn {
+      background: #d9534f;
+      border: none;
+      color: white;
+      border-radius: 4px;
+      padding: 6px 10px;
+      cursor: pointer;
+      margin-top: 10px;
+    }
+
+    .close-btn:hover {
+      background: #b52b27;
+    }
+  </style>
+</head>
+<body>
+
+  <div id="gallery"></div>
+
+  <!-- Popup -->
+  <div id="popup" class="popup">
+    <div class="popup-content">
+      <h3>Submit Order</h3>
+      <form id="orderForm">
+        <label>Identifier / Username:</label>
+        <input type="text" id="identifier" required>
+
+        <label><input type="checkbox" id="superSoup"> Super Soup</label>
+
+        <label>Soup:</label>
+        <input type="text" id="soupName" readonly>
+
+        <button type="submit">Submit</button>
+        <button type="button" class="close-btn" onclick="closePopup()">Cancel</button>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    // Hard-coded soups + images
+    const soups = [
+      { name: "Tomato Bliss--DEMO", image: "https://imgplaceholder.com/220x140/ff6b6b/ffffff/fa-image?text=Tomato+Bliss" },
+      { name: "Creamy Mushroom", image: "https://imgplaceholder.com/220x140/a8a29e/ffffff/fa-image?text=Creamy+Mushroom" },
+      { name: "Golden Corn", image: "https://imgplaceholder.com/220x140/ffd700/000000/fa-image?text=Golden+Corn" },
+      { name: "Spicy Ramen", image: "https://imgplaceholder.com/220x140/ff4d4d/ffffff/fa-image?text=Spicy+Ramen" },
+      { name: "Veggie Delight", image: "https://imgplaceholder.com/220x140/4caf50/ffffff/fa-image?text=Veggie+Delight" },
+      { name: "Beef Broth", image: "https://imgplaceholder.com/220x140/8b4513/ffffff/fa-image?text=Beef+Broth" },
+      { name: "Miso Magic", image: "https://imgplaceholder.com/220x140/d4a373/ffffff/fa-image?text=Miso+Magic" },
+      { name: "Seaweed Wonder", image: "https://imgplaceholder.com/220x140/2e7d32/ffffff/fa-image?text=Seaweed+Wonder" },
+      { name: "Pumpkin Puree", image: "https://imgplaceholder.com/220x140/ff9800/ffffff/fa-image?text=Pumpkin+Puree" },
+      { name: "Chicken Noodle", image: "https://imgplaceholder.com/220x140/ffa726/000000/fa-image?text=Chicken+Noodle" }
+    ];
+
+    const gallery = document.getElementById('gallery');
+    const popup = document.getElementById('popup');
+    const soupNameInput = document.getElementById('soupName');
+    const orderForm = document.getElementById('orderForm');
+    let currentSoup = "";
+
+    // Build the soup cards
+    soups.forEach((soup, index) => {
+      const card = document.createElement('div');
+      card.className = 'card';
+      card.innerHTML = `
+        <img src="${soup.image}" alt="${soup.name}">
+        <p>${soup.name}</p>
+        <button onclick="openPopup('${soup.name}')">Submit</button>
+      `;
+      gallery.appendChild(card);
+    });
+
+    function openPopup(soup) {
+      currentSoup = soup;
+      soupNameInput.value = soup;
+      popup.style.display = "flex";
+    }
+
+    function closePopup() {
+      popup.style.display = "none";
+      orderForm.reset();
+    }
+
+    orderForm.addEventListener("submit", async (e) => {
+      e.preventDefault();
+
+      const order = {
+        identifier: document.getElementById('identifier').value,
+        superSoup: document.getElementById('superSoup').checked,
+        soup: currentSoup,
+        timestamp: new Date().toISOString()
+      };
+
+      try {
+        const res = await fetch("https://infintyegg.pythonanywhere.com/order", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(order)
+        });
+
+        if (res.ok) {
+          alert("✅ Order submitted successfully!");
+        } else {
+          alert("❌ Failed to submit order");
+        }
+      } catch (err) {
+        alert("⚠️ Error sending request: " + err.message);
+      }
+
+      closePopup();
+    });
+  </script>
+
+</body>
+</html>
